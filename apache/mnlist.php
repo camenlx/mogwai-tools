@@ -13,6 +13,7 @@ $username = '';
 $password = '';
 $host = 'localhost'; //'127.0.0.1';
 $port = 17710;  // make sure to use RPC port, not the P2P port (17777)
+$fist_letter = "M";   // first letter of coin addresses
 
 $rpc = new RPCClient($username, $password, $host, $port) or die("Unable to instantiate RPCClient" . PHP_EOL);
 
@@ -20,13 +21,20 @@ $rpc = new RPCClient($username, $password, $host, $port) or die("Unable to insta
 // note:  recent addition to masternodelist api is "qualify" which will simplify figuring 
 // out which masternodes are qualified for rewards.  this is not yet implemented in this script 
 // as it has not been rolled into a formal release yet 
+$getinfo = $rpc->getinfo();
+
+if (empty($getinfo)) {
+    // something wrong with rpc connection 
+    echo json_encode(array("error"=>"rpc not responding"));
+    exit(0);
+}
+
 $full = $rpc->masternodelist("full");
 $rank = $rpc->masternodelist("rank");
-$getinfo = $rpc->getinfo();
 $getblocktemplate = $rpc->getblocktemplate();
 $getblocktemplate['difficulty'] = get_difficulty($getblocktemplate['bits']);
 
-$next_10 = $rpc->masternode("winners", "0", "M");
+$next_10 = $rpc->masternode("winners", "0", $first_letter);
 foreach ($next_10 as $key => $el) {
     $mns = preg_split('/(:|,| )/',$el,-1, PREG_SPLIT_NO_EMPTY);
     // if there are more than one winner, find the one with the highest vote count
