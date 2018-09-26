@@ -120,7 +120,10 @@ usort($rank, function($a, $b) {
 // add tiers and estimated time to payment
 foreach ($rank as $key => $mn) {
 
-    if (in_array($rank[$key]['payee'], $next_10)) {
+    // there can be multiple masternodes with the same payout address,
+    // so at least filter out the non-enabled statuses when noting who is
+    // next in line to get paid (this approach still doesn't dedupe the paying list)
+    if (strpos($mn['status'], 'ENABLED') !== false && in_array($rank[$key]['payee'], $next_10)) {
         $rank[$key]['tier'] = "000_PAYING";
         $rank[$key]['lastpaidblock'] = array_search($rank[$key]['payee'], $next_10);
         $rank[$key]['pos'] = -10 + ($max_paid_block - $rank[$key]['lastpaidblock'])*-1;
