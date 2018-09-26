@@ -14,6 +14,7 @@ $password = '';
 $host = 'localhost'; //'127.0.0.1';
 $port = 17710;  // make sure to use RPC port, not the P2P port (17777)
 $fist_letter = "M";   // first letter of coin addresses
+$blocktime = 120;   // seconds
 
 $rpc = new RPCClient($username, $password, $host, $port) or die("Unable to instantiate RPCClient" . PHP_EOL);
 
@@ -101,7 +102,7 @@ $enabled_count = $rpc->masternode('count', 'qualify');
 
 
 $count_ten_pct = $count / 10;
-$estimate_ten_pct = floor($count_ten_pct) * 120;
+$estimate_ten_pct = floor($count_ten_pct) * $blocktime;
 $count_top_tier = 0;
 $target_age = $count * (2.6 * 60);  // MNs are not eligible until this age (masternodeman.cpp 512)
 
@@ -123,7 +124,7 @@ foreach ($rank as $key => $mn) {
         $rank[$key]['tier'] = "000_PAYING";
         $rank[$key]['lastpaidblock'] = array_search($rank[$key]['payee'], $next_10);
         $rank[$key]['pos'] = -10 + ($max_paid_block - $rank[$key]['lastpaidblock'])*-1;
-        $rank[$key]['estimate'] = time() + (10 + $rank[$key]['pos']) * 120;
+        $rank[$key]['estimate'] = time() + (10 + $rank[$key]['pos']) * $blocktime;
     }
     elseif (strpos($mn['status'], 'ENABLED') === false) {
         $rank[$key]['tier'] = "004_INVALID";
@@ -134,19 +135,19 @@ foreach ($rank as $key => $mn) {
         $num_blocks_needed = ceil(($target_age - $mn['activeseconds']) / (2.6*60));
         $rank[$key]['tier'] = "003_NEW";
         $rank[$key]['pos'] = $count + $num_blocks_needed;
-        $rank[$key]['estimate'] = ($target_age - $rank[$key]['activeseconds']) + time() + $estimate_ten_pct + 10 * 120;
+        $rank[$key]['estimate'] = ($target_age - $rank[$key]['activeseconds']) + time() + $estimate_ten_pct + 10 * $blocktime;
     }
     else {
         $count_top_tier++;
         if ($count_top_tier <= $count_ten_pct) {
             $rank[$key]['tier'] = "001_10_PERCENT";
             $rank[$key]['pos'] = $count_top_tier;
-            $rank[$key]['estimate'] = time() + $estimate_ten_pct + 10 * 120;
+            $rank[$key]['estimate'] = time() + $estimate_ten_pct + 10 * $blocktime;
         }
         else {
             $rank[$key]['tier'] = "002_90_PERCENT";
             $rank[$key]['pos'] = $count_top_tier;
-            $rank[$key]['estimate'] = time() + (10 + $rank[$key]['pos']) * 120;
+            $rank[$key]['estimate'] = time() + (10 + $rank[$key]['pos']) * $blocktime;
         }
     }
 }
